@@ -1168,7 +1168,7 @@ end
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
 
 -- Create the main window
-local win = DiscordLib:Window("Nerdy ahh script")
+local win = DiscordLib:Window("Goofy ahh script")
 
 -- Create a server tab
 local serv = win:Server("Main", "http://www.roblox.com/asset/?id=6031075938")
@@ -1346,19 +1346,6 @@ local destroyTab = serv:Channel("Destroy GUI")
 
 destroyTab:Button("Destroy GUI", function()
     DiscordLib:Destroy()
-end)
-
--- Key System Channel
-local keyTab = serv:Channel("Key System")
-
-keyTab:Textbox("Enter Key", "Enter key here", true, function(value)
-    if value == correctKey then
-        authenticated = true
-        -- After successful authentication, re-create the main GUI
-        -- Ensure that the function `createMainGUI()` is called only once the key is correct
-    else
-        DiscordLib:Notification("Authentication Error", "The key you entered is incorrect.", "Okay!")
-    end
 end)
 
 -- Initialize the DiscordLib UI
