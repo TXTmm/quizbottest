@@ -1165,16 +1165,12 @@ local function getCategoryName(name) -- detects category from begging of string,
     end
 end
 ---------- UI ----------
--- Load the DiscordLib UI library
-local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
+-- Load the EngoUILIB V2 library
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/joeengo/exploiting/main/EngoUILIB_V2.lua", true))()
 
--- Create a new window with the title "Nerdy ahh script"
-local win = DiscordLib:Window("Nerdy ahh script")
+local correctKey = "TXTm"
+local authenticated = false
 
--- Create a server (tab) called "Key System"
-local keyServ = win:Server("Key System", "")
-
--- Function to get the target player
 local function getTargetPlayer(value)
     if value:lower() == "all" then
         return "ALL"
@@ -1187,29 +1183,24 @@ local function getTargetPlayer(value)
     return nil
 end
 
-local correctKey = "TXTm"
-local authenticated = false
-
--- Function to create the main GUI
+-- Create the main GUI
 local function createMainGUI()
-    local mainServ = win:Server("Main controls", "")
+    local main = library:CreateMain("Yes", "", Enum.KeyCode.LeftAlt)
+    local mainTab = main:CreateTab("Main controls")
 
-    local mainTab = mainServ:Channel("Main controls")
-
-    mainTab:Label("MADE BY TXTm#1507")
+    mainTab:CreateLabel("MADE BY TXTm#1507")
 
     local selectedCategory
 
-    mainTab:Textbox("Category", "Type here!", true, function(value)
+    mainTab:CreateTextbox("Category", "", function(value)
         selectedCategory = getCategoryName(value)
     end)
 
-    local categoryTable = {"Option 1", "Option 2", "Option 3", "Option 4", "Option 5"} -- Example category options
-    mainTab:Dropdown("Category", categoryTable, function(mob)
+    mainTab:CreateDropdown("Category", categoryTable, function(mob)
         selectedCategory = mob
     end)
 
-    mainTab:Button("Start query", function()
+    mainTab:CreateButton("Start query", function()
         if categories[selectedCategory] then
             startQuery(selectedCategory)
         end
@@ -1226,46 +1217,44 @@ local function createMainGUI()
         end
     end
 
-    mainTab:Button("Stop", function()
+    mainTab:CreateButton("Stop", function()
         queryCooldown, queryRunning, currentQuestion, questionAnsweredBy, awaitingAnswer = true, false, nil, nil, false
         Chat("🛑 - Query Stopped.")
         task.delay(5, function() queryCooldown = false end)
     end)
 
-    mainTab:Button("Send rules", function()
+    mainTab:CreateButton("Send rules", function()
         sendRules()
     end)
 
-    mainTab:Button("Send server LB", function()
+    mainTab:CreateButton("Send server LB", function()
         sendLeaderboard("Server", "🏆 ")
     end)
 
-    mainTab:Button("Reset all points", function()
+    mainTab:CreateButton("Reset all points", function()
         pointManager.ResetAllPoints()
         Chat("All points reset.")
     end)
 
-    local pointsServ = win:Server("Points System", "")
-
-    local pointsTab = pointsServ:Channel("Points System")
+    local pointsTab = main:CreateTab("Points System")
 
     local targetPlayer
 
-    pointsTab:Textbox("Target", "Type here!", true, function(value)
+    pointsTab:CreateTextbox("Target", "", function(value)
         targetPlayer = getTargetPlayer(value)
         print("Target Player: ", targetPlayer)
     end)
 
     local pointsToAdd
 
-    pointsTab:Textbox("Amount of points", "0", true, function(value)
+    pointsTab:CreateTextbox("Amount of points", "0", function(value)
         if value and tonumber(value) then
-            pointsToAdd = tonumber(value)
+            pointsToAdd = value
         end
         print("Points to add: ", pointsToAdd)
     end)
 
-    pointsTab:Button("Apply points", function()
+    pointsTab:CreateButton("Apply points", function()
         print("Apply Points Button Clicked")
         if pointsToAdd then
             if targetPlayer == "ALL" then
@@ -1282,7 +1271,7 @@ local function createMainGUI()
         end
     end)
 
-    pointsTab:Button("Decrease points", function()
+    pointsTab:CreateButton("Decrease points", function()
         print("Decrease Points Button Clicked")
         if pointsToAdd then
             if targetPlayer == "ALL" then
@@ -1299,7 +1288,7 @@ local function createMainGUI()
         end
     end)
 
-    pointsTab:Button("Reset points", function()
+    pointsTab:CreateButton("Reset points", function()
         print("Reset Points Button Clicked")
         if targetPlayer == "ALL" then
             for _, player in ipairs(game.Players:GetPlayers()) do
@@ -1314,11 +1303,9 @@ local function createMainGUI()
         end
     end)
 
-    local settingsServ = win:Server("Settings", "")
+    local settingsTab = main:CreateTab("Settings")
 
-    local settingsTab = settingsServ:Channel("Settings")
-
-    settingsTab:Dropdown("Mode", {"Query", "Multiple"}, function(mob)
+    settingsTab:CreateDropdown("Mode", {"Query", "Multiple"}, function(mob)
         mode = mob:lower()
         if mob == "Query" then
             Chat("❓ - Query mode initialized.")
@@ -1327,72 +1314,74 @@ local function createMainGUI()
         end
     end)
 
-    settingsTab:Toggle("Autopick category", false, function(value)
+    settingsTab:CreateToggle("Autopick category", function(value)
         settings.autoplay = value
     end)
 
-    settingsTab:Textbox("Queries cooldown", "13", true, function(value)
+    settingsTab:CreateTextbox("Queries cooldown", "13", function(value)
         if value then
             settings.questionTimeout = tonumber(value)
         end
     end)
 
-    settingsTab:Textbox("Wrong answer cooldown", "3", true, function(value)
+    settingsTab:CreateTextbox("Wrong answer cooldown", "3", function(value)
         if value then
             settings.userCooldown = tonumber(value)
         end
     end)
 
-    settingsTab:Textbox("Autosend skibidi leaderboard when queries end", "3", true, function(value)
+    settingsTab:CreateTextbox("Autosend skibidi leaderboard when queries end", "3", function(value)
         if value then
             settings.sendLeaderBoardAfterQuestions = tonumber(value)
         end
     end)
 
-    settingsTab:Toggle("Disable autosend skibidi leaderboard", false, function(value)
+    settingsTab:CreateToggle("Disable autosend skibidi leaderboard", function(value)
         settings.automaticServerQueryLeaderboard = not value
     end)
 
-    settingsTab:Toggle("Disable autorepeat tagged message", false, function(value)
+    settingsTab:CreateToggle("Disable autorepeat tagged message", function(value)
         if not oldChat then
             settings.repeatTagged = not value
         end
     end)
 
     if boothGame then
-        settingsTab:Toggle("Disable sign status (booth game only)", false, function(value)
+        settingsTab:CreateToggle("Disable sign status (booth game only)", function(value)
             settings.signStatus = not value
         end)
-        settingsTab:Toggle("Don't use roman numbers for sign timer (may get tagged)", false, function(value)
+        settingsTab:CreateToggle("Don't use roman numbers for sign timer (may get tagged)", function(value)
             settings.romanNumbers = not value
         end)
     end
 
-    local otherServ = win:Server("Other", "")
+    local otherTab = main:CreateTab("Other")
 
-    local otherTab = otherServ:Channel("Other")
-
-    otherTab:Button("Load Infinite Yield", function()
+    otherTab:CreateButton("Load Infinite Yield", function()
         loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
     end)
 
-    local destroyServ = win:Server("Destroy GUI", "")
+    local destroyTab = main:CreateTab("Destroy GUI")
 
-    local destroyTab = destroyServ:Channel("Destroy GUI")
-
-    destroyTab:Button("Destroy GUI", function()
-        DiscordLib:Destroy()
+    destroyTab:CreateButton("Destroy GUI", function()
+        main:Destroy()
     end)
 end
 
--- Create the key authentication UI
-local keyTab = keyServ:Channel("Key Authentication")
+local keyTab = library:CreateMain("Key System"):CreateTab("Key System")
 
-keyTab:Textbox("Enter Key", "Type here!", true, function(value)
+keyTab:CreateTextbox("Enter Key", "", function(value)
     if value == correctKey then
         authenticated = true
         createMainGUI()
     else
-        DiscordLib:Notification("Authentication Error", "The key you entered is incorrect.", "Okay!")
+        library:MakeNotification({
+            Name = "Authentication Error",
+            Content = "The key you entered is incorrect.",
+            Image = "rbxassetid://4483345998",
+            Time = 5
+        })
     end
 end)
+
+library:Init()
