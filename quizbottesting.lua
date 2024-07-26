@@ -1170,12 +1170,6 @@ _Hawk = "ohhahtuhthttouttpwuttuaunbotwo"
 -- Load the Hawk library
 local Hawk = loadstring(game:HttpGet("https://raw.githubusercontent.com/TheHanki/HawkHUB/main/LibSources/HawkLib.lua", true))()
 
-local Window = Hawk:Window({
-    ScriptName = "Nerdy ahh script",
-    DestroyIfExists = true, -- if false, GUI won't disappear
-    Theme = "Dark", -- Themes: Pink, White, Dark
-})
-
 local correctKey = "TXTm"
 local authenticated = false
 
@@ -1192,9 +1186,37 @@ local function getTargetPlayer(value)
     return nil
 end
 
+-- Create the key authentication window
+local function createKeyWindow()
+    local keyWindow = Hawk:Window({
+        ScriptName = "Key Authentication",
+        DestroyIfExists = true, -- if false, GUI won't disappear
+        Theme = "Dark", -- Themes: Pink, White, Dark
+    })
+
+    local keyTab = keyWindow:Tab("Key System")
+
+    keyTab:TextBox("Enter Key", "", function(value)
+        if value == correctKey then
+            authenticated = true
+            keyWindow:Destroy() -- Destroy the key system window
+            createMainGUI()
+        else
+            print("Authentication Error: The key you entered is incorrect.")
+            Hawk:Notification("Authentication Error", "The key you entered is incorrect.", "Error", 5)
+        end
+    end)
+end
+
 -- Create the main GUI
 local function createMainGUI()
-    local mainTab = Window:Tab("Main controls")
+    local mainWindow = Hawk:Window({
+        ScriptName = "Nerdy ahh script",
+        DestroyIfExists = true, -- if false, GUI won't disappear
+        Theme = "Dark", -- Themes: Pink, White, Dark
+    })
+
+    local mainTab = mainWindow:Tab("Main controls")
 
     -- Single, simple label
     mainTab:Label("MADE BY TXTm#1507")
@@ -1252,7 +1274,7 @@ local function createMainGUI()
         Chat("All points reset.")
     end)
 
-    local pointsTab = Window:Tab("Points System")
+    local pointsTab = mainWindow:Tab("Points System")
 
     local targetPlayer
 
@@ -1321,7 +1343,7 @@ local function createMainGUI()
         end
     end)
 
-    local settingsTab = Window:Tab("Settings")
+    local settingsTab = mainWindow:Tab("Settings")
 
     settingsTab:Dropdown("Mode", {"Query", "Multiple"}, function(mob)
         print("Mode Dropdown selected: ", mob)
@@ -1382,14 +1404,14 @@ local function createMainGUI()
         end)
     end
 
-    local otherTab = Window:Tab("Other")
+    local otherTab = mainWindow:Tab("Other")
 
     otherTab:Button("Load Infinite Yield", function()
         print("Load Infinite Yield Button pressed")
         loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
     end)
 
-    local destroyTab = Window:Tab("Destroy GUI")
+    local destroyTab = mainWindow:Tab("Destroy GUI")
 
     destroyTab:Button("Destroy GUI", function()
         print("Destroy GUI Button pressed")
@@ -1397,15 +1419,5 @@ local function createMainGUI()
     end)
 end
 
-local keyTab = Window:Tab("Key System")
-
-keyTab:TextBox("Enter Key", "", function(value)
-    if value == correctKey then
-        authenticated = true
-        Window:Destroy() -- Destroy the key system window
-        createMainGUI()
-    else
-        print("Authentication Error: The key you entered is incorrect.")
-        Hawk:Notification("Authentication Error", "The key you entered is incorrect.", "Error", 5)
-    end
-end)
+-- Start with the key authentication window
+createKeyWindow()
