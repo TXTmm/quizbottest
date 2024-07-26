@@ -1165,10 +1165,31 @@ local function getCategoryName(name) -- detects category from begging of string,
     end
 end
 ---------- UI ----------
--- Load the EngoUILIB V2 library
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/joeengo/exploiting/main/EngoUILIB_V2.lua", true))()
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
-local correctKey = "TXTm"
+-- Secure Mode (if needed)
+getgenv().SecureMode = true
+
+-- Create the main GUI
+local Window = Rayfield:CreateWindow({
+    Name = "Nerdy ahh script",
+    LoadingTitle = "Rayfield Interface Suite",
+    LoadingSubtitle = "by Sirius",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "RayfieldTest",
+        FileName = "NerdyScript"
+    },
+    KeySystem = true,
+    KeySettings = {
+        Title = "Key Authentication",
+        Subtitle = "Enter Key",
+        Note = "Key needed to access",
+        SaveKey = true,
+        Key = "TXTm"
+    }
+})
+
 local authenticated = false
 
 local function getTargetPlayer(value)
@@ -1183,78 +1204,119 @@ local function getTargetPlayer(value)
     return nil
 end
 
--- Create the main GUI
-local function createMainGUI()
-    local main = library:CreateMain("Yes", "", Enum.KeyCode.LeftAlt)
-    local mainTab = main:CreateTab("Main controls")
+-- Create the main tab
+local mainTab = Window:CreateTab("Main controls", 4483345998)
 
-    mainTab:CreateLabel("MADE BY TXTm#1507")
+mainTab:CreateLabel("MADE BY TXTm#1507", {
+    TextSize = 15,
+    TextColor = Color3.fromRGB(255,255,255),
+    BgColor = Color3.fromRGB(69,69,69)
+})
 
-    local selectedCategory
+local selectedCategory
 
-    mainTab:CreateTextbox("Category", "", function(value)
+mainTab:CreateInput({
+    Name = "Category",
+    PlaceholderText = "Enter category",
+    RemoveTextAfterFocusLost = true,
+    Callback = function(value)
         selectedCategory = getCategoryName(value)
-    end)
+    end
+})
 
-    mainTab:CreateDropdown("Category", categoryTable, function(mob)
+mainTab:CreateDropdown({
+    Name = "Category",
+    Options = categoryTable,
+    CurrentOption = "",
+    Flag = "CategoryDropdown",
+    Callback = function(mob)
         selectedCategory = mob
-    end)
+    end
+})
 
-    mainTab:CreateButton("Start query", function()
+mainTab:CreateButton({
+    Name = "Start query",
+    Callback = function()
         if categories[selectedCategory] then
             startQuery(selectedCategory)
         end
-    end)
-
-    local RS = game:GetService("ReplicatedStorage")
-    local TCS = game:GetService("TextChatService")
-
-    local function Chat(msg)
-        if RS:FindFirstChild("DefaultChatSystemChatEvents") then
-            RS.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
-        else
-            TCS.TextChannels.RBXGeneral:SendAsync(msg)
-        end
     end
+})
 
-    mainTab:CreateButton("Stop", function()
+local RS = game:GetService("ReplicatedStorage")
+local TCS = game:GetService("TextChatService")
+
+local function Chat(msg)
+    if RS:FindFirstChild("DefaultChatSystemChatEvents") then
+        RS.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
+    else
+        TCS.TextChannels.RBXGeneral:SendAsync(msg)
+    end
+end
+
+mainTab:CreateButton({
+    Name = "Stop",
+    Callback = function()
         queryCooldown, queryRunning, currentQuestion, questionAnsweredBy, awaitingAnswer = true, false, nil, nil, false
         Chat("🛑 - Query Stopped.")
         task.delay(5, function() queryCooldown = false end)
-    end)
+    end
+})
 
-    mainTab:CreateButton("Send rules", function()
+mainTab:CreateButton({
+    Name = "Send rules",
+    Callback = function()
         sendRules()
-    end)
+    end
+})
 
-    mainTab:CreateButton("Send server LB", function()
+mainTab:CreateButton({
+    Name = "Send server LB",
+    Callback = function()
         sendLeaderboard("Server", "🏆 ")
-    end)
+    end
+})
 
-    mainTab:CreateButton("Reset all points", function()
+mainTab:CreateButton({
+    Name = "Reset all points",
+    Callback = function()
         pointManager.ResetAllPoints()
         Chat("All points reset.")
-    end)
+    end
+})
 
-    local pointsTab = main:CreateTab("Points System")
+-- Points System tab
+local pointsTab = Window:CreateTab("Points System", 4483345998)
 
-    local targetPlayer
+local targetPlayer
 
-    pointsTab:CreateTextbox("Target", "", function(value)
+pointsTab:CreateInput({
+    Name = "Target",
+    PlaceholderText = "Enter target player",
+    RemoveTextAfterFocusLost = true,
+    Callback = function(value)
         targetPlayer = getTargetPlayer(value)
         print("Target Player: ", targetPlayer)
-    end)
+    end
+})
 
-    local pointsToAdd
+local pointsToAdd
 
-    pointsTab:CreateTextbox("Amount of points", "0", function(value)
+pointsTab:CreateInput({
+    Name = "Amount of points",
+    PlaceholderText = "0",
+    RemoveTextAfterFocusLost = true,
+    Callback = function(value)
         if value and tonumber(value) then
             pointsToAdd = value
         end
         print("Points to add: ", pointsToAdd)
-    end)
+    end
+})
 
-    pointsTab:CreateButton("Apply points", function()
+pointsTab:CreateButton({
+    Name = "Apply points",
+    Callback = function()
         print("Apply Points Button Clicked")
         if pointsToAdd then
             if targetPlayer == "ALL" then
@@ -1269,9 +1331,12 @@ local function createMainGUI()
                 Chat("❌ - Target player not found.")
             end
         end
-    end)
+    end
+})
 
-    pointsTab:CreateButton("Decrease points", function()
+pointsTab:CreateButton({
+    Name = "Decrease points",
+    Callback = function()
         print("Decrease Points Button Clicked")
         if pointsToAdd then
             if targetPlayer == "ALL" then
@@ -1286,9 +1351,12 @@ local function createMainGUI()
                 Chat("❌ - Target player not found.")
             end
         end
-    end)
+    end
+})
 
-    pointsTab:CreateButton("Reset points", function()
+pointsTab:CreateButton({
+    Name = "Reset points",
+    Callback = function()
         print("Reset Points Button Clicked")
         if targetPlayer == "ALL" then
             for _, player in ipairs(game.Players:GetPlayers()) do
@@ -1301,87 +1369,147 @@ local function createMainGUI()
         else
             Chat("❌ - Target player not found.")
         end
-    end)
+    end
+})
 
-    local settingsTab = main:CreateTab("Settings")
+-- Settings tab
+local settingsTab = Window:CreateTab("Settings", 4483345998)
 
-    settingsTab:CreateDropdown("Mode", {"Query", "Multiple"}, function(mob)
+settingsTab:CreateDropdown({
+    Name = "Mode",
+    Options = {"Query", "Multiple"},
+    CurrentOption = "Query",
+    Flag = "ModeDropdown",
+    Callback = function(mob)
         mode = mob:lower()
         if mob == "Query" then
             Chat("❓ - Query mode initialized.")
         elseif mob == "Multiple" then
             Chat("🅺❕ - Multiple mode initialized.")
         end
-    end)
+    end
+})
 
-    settingsTab:CreateToggle("Autopick category", function(value)
+settingsTab:CreateToggle({
+    Name = "Autopick category",
+    CurrentValue = false,
+    Flag = "AutopickToggle",
+    Callback = function(value)
         settings.autoplay = value
-    end)
+    end
+})
 
-    settingsTab:CreateTextbox("Queries cooldown", "13", function(value)
+settingsTab:CreateInput({
+    Name = "Queries cooldown",
+    PlaceholderText = "13",
+    RemoveTextAfterFocusLost = true,
+    Callback = function(value)
         if value then
             settings.questionTimeout = tonumber(value)
         end
-    end)
+    end
+})
 
-    settingsTab:CreateTextbox("Wrong answer cooldown", "3", function(value)
+settingsTab:CreateInput({
+    Name = "Wrong answer cooldown",
+    PlaceholderText = "3",
+    RemoveTextAfterFocusLost = true,
+    Callback = function(value)
         if value then
             settings.userCooldown = tonumber(value)
         end
-    end)
+    end
+})
 
-    settingsTab:CreateTextbox("Autosend skibidi leaderboard when queries end", "3", function(value)
+settingsTab:CreateInput({
+    Name = "Autosend skibidi leaderboard when queries end",
+    PlaceholderText = "3",
+    RemoveTextAfterFocusLost = true,
+    Callback = function(value)
         if value then
             settings.sendLeaderBoardAfterQuestions = tonumber(value)
         end
-    end)
+    end
+})
 
-    settingsTab:CreateToggle("Disable autosend skibidi leaderboard", function(value)
+settingsTab:CreateToggle({
+    Name = "Disable autosend skibidi leaderboard",
+    CurrentValue = false,
+    Flag = "DisableLeaderboardToggle",
+    Callback = function(value)
         settings.automaticServerQueryLeaderboard = not value
-    end)
+    end
+})
 
-    settingsTab:CreateToggle("Disable autorepeat tagged message", function(value)
+settingsTab:CreateToggle({
+    Name = "Disable autorepeat tagged message",
+    CurrentValue = false,
+    Flag = "DisableRepeatToggle",
+    Callback = function(value)
         if not oldChat then
             settings.repeatTagged = not value
         end
-    end)
-
-    if boothGame then
-        settingsTab:CreateToggle("Disable sign status (booth game only)", function(value)
-            settings.signStatus = not value
-        end)
-        settingsTab:CreateToggle("Don't use roman numbers for sign timer (may get tagged)", function(value)
-            settings.romanNumbers = not value
-        end)
     end
+})
 
-    local otherTab = main:CreateTab("Other")
-
-    otherTab:CreateButton("Load Infinite Yield", function()
-        loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
-    end)
-
-    local destroyTab = main:CreateTab("Destroy GUI")
-
-    destroyTab:CreateButton("Destroy GUI", function()
-        main:Destroy()
-    end)
+if boothGame then
+    settingsTab:CreateToggle({
+        Name = "Disable sign status (booth game only)",
+        CurrentValue = false,
+        Flag = "DisableSignStatusToggle",
+        Callback = function(value)
+            settings.signStatus = not value
+        end
+    })
+    settingsTab:CreateToggle({
+        Name = "Don't use roman numbers for sign timer (may get tagged)",
+        CurrentValue = false,
+        Flag = "DisableRomanNumbersToggle",
+        Callback = function(value)
+            settings.romanNumbers = not value
+        end
+    })
 end
 
-local keyTab = library:CreateMain("Key System"):CreateTab("Key System")
+-- Other tab
+local otherTab = Window:CreateTab("Other", 4483345998)
 
-keyTab:CreateTextbox("Enter Key", "", function(value)
-    if value == correctKey then
-        authenticated = true
-        createMainGUI()
-    else
-        library:MakeNotification({
-            Name = "Authentication Error",
-            Content = "The key you entered is incorrect.",
-            Image = "rbxassetid://4483345998",
-            Time = 5
-        })
+otherTab:CreateButton({
+    Name = "Load Infinite Yield",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
     end
-end)
+})
 
-library:Init()
+-- Destroy GUI tab
+local destroyTab = Window:CreateTab("Destroy GUI", 4483345998)
+
+destroyTab:CreateButton({
+    Name = "Destroy GUI",
+    Callback = function()
+        Rayfield:Destroy()
+    end
+})
+
+-- Key System tab
+local keyTab = Window:CreateTab("Key System", 4483345998)
+
+keyTab:CreateInput({
+    Name = "Enter Key",
+    PlaceholderText = "",
+    RemoveTextAfterFocusLost = true,
+    Callback = function(value)
+        if value == "TXTm" then
+            authenticated = true
+            -- Call your function to create the main GUI here
+        else
+            Rayfield:Notify({
+                Title = "Authentication Error",
+                Content = "The key you entered is incorrect.",
+                Duration = 5
+            })
+        end
+    end
+})
+
+Rayfield:Init()
