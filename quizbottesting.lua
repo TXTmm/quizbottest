@@ -1165,76 +1165,55 @@ local function getCategoryName(name) -- detects category from begging of string,
     end
 end
 ---------- UI ----------
-_Hawk = "ohhahtuhthttouttpwuttuaunbotwo"
+-- Assuming library is already loaded and available
 
--- Load the Hawk library
-local Hawk = loadstring(game:HttpGet("https://raw.githubusercontent.com/TheHanki/HawkHUB/main/LibSources/HawkLib.lua", true))()
-
-local correctKey = "TXTm"
-local authenticated = false
-
--- Function to get the target player
-local function getTargetPlayer(value)
-    if value:lower() == "all" then
-        return "ALL"
-    end
-    for _, player in ipairs(game.Players:GetPlayers()) do
-        if player.Name:lower():sub(1, #value) == value:lower() or player.DisplayName:lower():sub(1, #value) == value:lower() then
-            return player
-        end
-    end
-    return nil
-end
-
--- Create the key authentication window
-local function createKeyWindow()
-    local keyWindow = Hawk:Window({
-        ScriptName = "Key Authentication",
-        DestroyIfExists = true, -- if false, GUI won't disappear
-        Theme = "Dark", -- Themes: Pink, White, Dark
-    })
-
-    local keyTab = keyWindow:Tab("Key System")
-
-    keyTab:TextBox("Enter Key", "", function(value)
-        if value == correctKey then
-            authenticated = true
-            keyWindow:Destroy() -- Destroy the key system window
-            createMainGUI()
-        else
-            print("Authentication Error: The key you entered is incorrect.")
-            Hawk:Notification("Authentication Error", "The key you entered is incorrect.", "Error", 5)
-        end
-    end)
-end
-
--- Create the main GUI
+-- Define the main function to create the GUI
 local function createMainGUI()
-    local mainWindow = Hawk:Window({
-        ScriptName = "Nerdy ahh script",
-        DestroyIfExists = true, -- if false, GUI won't disappear
-        Theme = "Dark", -- Themes: Pink, White, Dark
+    -- Create the main window
+    local window = library:AddWindow("Nerdy ahh script", {
+        IntroEnabled = true,
+        IntroText = "Wassup My Nigga!",
+        Icon = "rbxassetid://12345678", -- Optional: replace with your icon
     })
 
-    local mainTab = mainWindow:Tab("Main controls")
+    local correctKey = "TXTm"
+    local authenticated = false
 
-    -- Single, simple label
-    mainTab:Label("MADE BY TXTm#1507")
+    -- Define a function to get the target player
+    local function getTargetPlayer(value)
+        if value:lower() == "all" then
+            return "ALL"
+        end
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player.Name:lower():sub(1, #value) == value:lower() or player.DisplayName:lower():sub(1, #value) == value:lower() then
+                return player
+            end
+        end
+        return nil
+    end
+
+    -- Main Controls Tab
+    local mainTab = window:AddTab("Main controls")
+    mainTab:AddLabel("MADE BY TXTm#1507", {
+        TextSize = 15,
+        TextColor = Color3.fromRGB(255, 255, 255),
+        BgColor = Color3.fromRGB(69, 69, 69),
+    })
 
     local selectedCategory
 
-    mainTab:TextBox("Category", "", function(value)
-        print("Category TextBox pressed")
+    mainTab:AddTextBox("Category", function(value)
         selectedCategory = getCategoryName(value)
-    end)
+    end, {["clear"] = true})
 
-    mainTab:Dropdown("Category", categoryTable, function(mob)
-        print("Category Dropdown selected: ", mob)
+    local categoryDropdown = mainTab:AddDropdown("Category", function(mob)
         selectedCategory = mob
     end)
+    -- Add dropdown options
+    categoryDropdown:Add("Option1")
+    categoryDropdown:Add("Option2")
 
-    mainTab:Button("Start query", function()
-        print("Start query Button pressed")
+    mainTab:AddButton("Start query", function()
         if categories[selectedCategory] then
             startQuery(selectedCategory)
         end
@@ -1251,51 +1230,45 @@ local function createMainGUI()
         end
     end
 
-    mainTab:Button("Stop", function()
-        print("Stop Button pressed")
+    mainTab:AddButton("Stop", function()
         queryCooldown, queryRunning, currentQuestion, questionAnsweredBy, awaitingAnswer = true, false, nil, nil, false
         Chat("🛑 - Query Stopped.")
         task.delay(5, function() queryCooldown = false end)
     end)
 
-    mainTab:Button("Send rules", function()
-        print("Send rules Button pressed")
+    mainTab:AddButton("Send rules", function()
         sendRules()
     end)
 
-    mainTab:Button("Send server LB", function()
-        print("Send server LB Button pressed")
+    mainTab:AddButton("Send server LB", function()
         sendLeaderboard("Server", "🏆 ")
     end)
 
-    mainTab:Button("Reset all points", function()
-        print("Reset all points Button pressed")
+    mainTab:AddButton("Reset all points", function()
         pointManager.ResetAllPoints()
         Chat("All points reset.")
     end)
 
-    local pointsTab = mainWindow:Tab("Points System")
-
+    -- Points System Tab
+    local pointsTab = window:AddTab("Points System")
     local targetPlayer
 
-    pointsTab:TextBox("Target", "", function(value)
-        print("Points Target TextBox pressed")
+    pointsTab:AddTextBox("Target", function(value)
         targetPlayer = getTargetPlayer(value)
         print("Target Player: ", targetPlayer)
-    end)
+    end, {["clear"] = true})
 
     local pointsToAdd
 
-    pointsTab:TextBox("Amount of points", "0", function(value)
-        print("Points Amount TextBox pressed")
+    pointsTab:AddTextBox("Amount of points", function(value)
         if value and tonumber(value) then
             pointsToAdd = value
         end
         print("Points to add: ", pointsToAdd)
-    end)
+    end, {["clear"] = true})
 
-    pointsTab:Button("Apply points", function()
-        print("Apply points Button pressed")
+    pointsTab:AddButton("Apply points", function()
+        print("Apply Points Button Clicked")
         if pointsToAdd then
             if targetPlayer == "ALL" then
                 for _, player in ipairs(game.Players:GetPlayers()) do
@@ -1311,8 +1284,8 @@ local function createMainGUI()
         end
     end)
 
-    pointsTab:Button("Decrease points", function()
-        print("Decrease points Button pressed")
+    pointsTab:AddButton("Decrease points", function()
+        print("Decrease Points Button Clicked")
         if pointsToAdd then
             if targetPlayer == "ALL" then
                 for _, player in ipairs(game.Players:GetPlayers()) do
@@ -1328,8 +1301,8 @@ local function createMainGUI()
         end
     end)
 
-    pointsTab:Button("Reset points", function()
-        print("Reset points Button pressed")
+    pointsTab:AddButton("Reset points", function()
+        print("Reset Points Button Clicked")
         if targetPlayer == "ALL" then
             for _, player in ipairs(game.Players:GetPlayers()) do
                 pointManager.ClearGlobalPointsForPlayer(player)
@@ -1343,81 +1316,88 @@ local function createMainGUI()
         end
     end)
 
-    local settingsTab = mainWindow:Tab("Settings")
-
-    settingsTab:Dropdown("Mode", {"Query", "Multiple"}, function(mob)
-        print("Mode Dropdown selected: ", mob)
+    -- Settings Tab
+    local settingsTab = window:AddTab("Settings")
+    settingsTab:AddDropdown("Mode", function(mob)
         mode = mob:lower()
         if mob == "Query" then
             Chat("❓ - Query mode initialized.")
         elseif mob == "Multiple" then
             Chat("🅺❕ - Multiple mode initialized.")
         end
-    end)
+    end):Add("Query"):Add("Multiple")
 
-    settingsTab:Toggle("Autopick category", false, function(value)
-        print("Autopick category Toggle switched to: ", value)
+    settingsTab:AddSwitch("Autopick category", function(value)
         settings.autoplay = value
-    end)
+    end):Set(false)
 
-    settingsTab:TextBox("Queries cooldown", "13", function(value)
-        print("Queries cooldown TextBox pressed")
+    settingsTab:AddTextBox("Queries cooldown", function(value)
         if value then
             settings.questionTimeout = tonumber(value)
         end
-    end)
+    end, {["clear"] = true})
 
-    settingsTab:TextBox("Wrong answer cooldown", "3", function(value)
-        print("Wrong answer cooldown TextBox pressed")
+    settingsTab:AddTextBox("Wrong answer cooldown", function(value)
         if value then
             settings.userCooldown = tonumber(value)
         end
-    end)
+    end, {["clear"] = true})
 
-    settingsTab:TextBox("Autosend skibidi leaderboard when queries end", "3", function(value)
-        print("Autosend skibidi leaderboard TextBox pressed")
+    settingsTab:AddTextBox("Autosend skibidi leaderboard when queries end", function(value)
         if value then
             settings.sendLeaderBoardAfterQuestions = tonumber(value)
         end
-    end)
+    end, {["clear"] = true})
 
-    settingsTab:Toggle("Disable autosend skibidi leaderboard", false, function(value)
-        print("Disable autosend skibidi leaderboard Toggle switched to: ", value)
+    settingsTab:AddSwitch("Disable autosend skibidi leaderboard", function(value)
         settings.automaticServerQueryLeaderboard = not value
-    end)
+    end):Set(false)
 
-    settingsTab:Toggle("Disable autorepeat tagged message", false, function(value)
-        print("Disable autorepeat tagged message Toggle switched to: ", value)
+    settingsTab:AddSwitch("Disable autorepeat tagged message", function(value)
         if not oldChat then
             settings.repeatTagged = not value
         end
-    end)
+    end):Set(false)
 
     if boothGame then
-        settingsTab:Toggle("Disable sign status (booth game only)", false, function(value)
-            print("Disable sign status Toggle switched to: ", value)
+        settingsTab:AddSwitch("Disable sign status (booth game only)", function(value)
             settings.signStatus = not value
-        end)
-        settingsTab:Toggle("Don't use roman numbers for sign timer (may get tagged)", false, function(value)
-            print("Don't use roman numbers Toggle switched to: ", value)
+        end):Set(false)
+        settingsTab:AddSwitch("Don't use roman numbers for sign timer (may get tagged)", function(value)
             settings.romanNumbers = not value
-        end)
+        end):Set(false)
     end
 
-    local otherTab = mainWindow:Tab("Other")
-
-    otherTab:Button("Load Infinite Yield", function()
-        print("Load Infinite Yield Button pressed")
+    -- Other Tab
+    local otherTab = window:AddTab("Other")
+    otherTab:AddButton("Load Infinite Yield", function()
         loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
     end)
 
-    local destroyTab = mainWindow:Tab("Destroy GUI")
-
-    destroyTab:Button("Destroy GUI", function()
-        print("Destroy GUI Button pressed")
-        Hawk:Destroy() -- Using HawkLib's Destroy function
+    -- Destroy GUI Tab
+    local destroyTab = window:AddTab("Destroy GUI")
+    destroyTab:AddButton("Destroy GUI", function()
+        library:FormatWindows() -- This might be required to format the window layout
+        window:Destroy() -- Adjust as needed to destroy the window
     end)
+
+    -- Key System Tab
+    local keyTab = window:AddTab("Key System")
+    keyTab:AddTextBox("Enter Key", function(value)
+        if value == correctKey then
+            authenticated = true
+            createMainGUI()
+        else
+            library:FormatWindows()
+            local notification = library:AddLabel("Authentication Error: The key you entered is incorrect.", {
+                TextColor = Color3.fromRGB(255, 0, 0),
+                TextSize = 15,
+            })
+            task.wait(5)
+            notification:Destroy()
+        end
+    end, {["clear"] = true})
 end
 
--- Start with the key authentication window
-createKeyWindow()
+-- Initialize the UI
+createMainGUI()
