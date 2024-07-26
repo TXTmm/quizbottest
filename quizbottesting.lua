@@ -1165,18 +1165,16 @@ local function getCategoryName(name) -- detects category from begging of string,
     end
 end
 ---------- UI ----------
+-- Load the DiscordLib UI library
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
 
--- Create the main window
-local win = DiscordLib:Window("Goofy ahh script")
+-- Create a new window with the title "Nerdy ahh script"
+local win = DiscordLib:Window("Nerdy ahh script")
 
--- Create a server tab
-local serv = win:Server("Main", "http://www.roblox.com/asset/?id=6031075938")
+-- Create a server (tab) called "Key System"
+local keyServ = win:Server("Key System", "")
 
--- Main Controls Channel
-local btns = serv:Channel("Main Controls")
-
--- Define the main UI functions
+-- Function to get the target player
 local function getTargetPlayer(value)
     if value:lower() == "all" then
         return "ALL"
@@ -1189,164 +1187,212 @@ local function getTargetPlayer(value)
     return nil
 end
 
-btns:Button("Start query", function()
-    if categories[selectedCategory] then
-        startQuery(selectedCategory)
-    end
-end)
+local correctKey = "TXTm"
+local authenticated = false
 
-btns:Button("Stop", function()
-    queryCooldown, queryRunning, currentQuestion, questionAnsweredBy, awaitingAnswer = true, false, nil, nil, false
-    Chat("🛑 - Query Stopped.")
-    task.delay(5, function() queryCooldown = false end)
-end)
+-- Function to create the main GUI
+local function createMainGUI()
+    local mainServ = win:Server("Main controls", "")
 
-btns:Button("Send rules", function()
-    sendRules()
-end)
+    local mainTab = mainServ:Channel("Main controls")
 
-btns:Button("Send server LB", function()
-    sendLeaderboard("Server", "🏆 ")
-end)
+    mainTab:Label("MADE BY TXTm#1507")
 
-btns:Button("Reset all points", function()
-    pointManager.ResetAllPoints()
-    Chat("All points reset.")
-end)
+    local selectedCategory
 
--- Points System Channel
-local pointsTab = serv:Channel("Points System")
-
-local targetPlayer
-local pointsToAdd
-
-pointsTab:Textbox("Target", "Enter player name", true, function(value)
-    targetPlayer = getTargetPlayer(value)
-    print("Target Player: ", targetPlayer)
-end)
-
-pointsTab:Textbox("Amount of points", "0", true, function(value)
-    if value and tonumber(value) then
-        pointsToAdd = value
-    end
-    print("Points to add: ", pointsToAdd)
-end)
-
-pointsTab:Button("Apply points", function()
-    print("Apply Points Button Clicked")
-    if pointsToAdd then
-        if targetPlayer == "ALL" then
-            for _, player in ipairs(game.Players:GetPlayers()) do
-                pointManager.AddPoints(player, pointsToAdd, "Global")
-            end
-            Chat("➕ - "..pointsToAdd.." points have been added to everyone.")
-        elseif targetPlayer then
-            pointManager.AddPoints(targetPlayer, pointsToAdd, "Global")
-            Chat("➕ - "..targetPlayer.DisplayName.. "'s points have been increased by ".. pointsToAdd.. ".")
-        else
-            Chat("❌ - Target player not found.")
-        end
-    end
-end)
-
-pointsTab:Button("Decrease points", function()
-    print("Decrease Points Button Clicked")
-    if pointsToAdd then
-        if targetPlayer == "ALL" then
-            for _, player in ipairs(game.Players:GetPlayers()) do
-                pointManager.AddPoints(player, -pointsToAdd, "Global")
-            end
-            Chat("➖ - "..pointsToAdd.." points have been decreased from everyone.")
-        elseif targetPlayer then
-            pointManager.AddPoints(targetPlayer, -pointsToAdd, "Global")
-            Chat("➖ - "..targetPlayer.DisplayName.. "'s points have been decreased by ".. pointsToAdd.. ".")
-        else
-            Chat("❌ - Target player not found.")
-        end
-    end
-end)
-
-pointsTab:Button("Reset points", function()
-    print("Reset Points Button Clicked")
-    if targetPlayer == "ALL" then
-        for _, player in ipairs(game.Players:GetPlayers()) do
-            pointManager.ClearGlobalPointsForPlayer(player)
-        end
-        Chat("All players' points have been reset.")
-    elseif targetPlayer then
-        pointManager.ClearGlobalPointsForPlayer(targetPlayer)
-        Chat(targetPlayer.DisplayName.. "'s points have been reset.")
-    else
-        Chat("❌ - Target player not found.")
-    end
-end)
-
--- Settings Channel
-local settingsTab = serv:Channel("Settings")
-
-settingsTab:Dropdown("Mode", {"Query", "Multiple"}, function(mob)
-    mode = mob:lower()
-    if mob == "Query" then
-        Chat("❓ - Query mode initialized.")
-    elseif mob == "Multiple" then
-        Chat("🅺❕ - Multiple mode initialized.")
-    end
-end)
-
-settingsTab:Toggle("Autopick category", false, function(value)
-    settings.autoplay = value
-end)
-
-settingsTab:Textbox("Queries cooldown", "13", true, function(value)
-    if value then
-        settings.questionTimeout = tonumber(value)
-    end
-end)
-
-settingsTab:Textbox("Wrong answer cooldown", "3", true, function(value)
-    if value then
-        settings.userCooldown = tonumber(value)
-    end
-end)
-
-settingsTab:Textbox("Autosend skibidi leaderboard when queries end", "3", true, function(value)
-    if value then
-        settings.sendLeaderBoardAfterQuestions = tonumber(value)
-    end
-end)
-
-settingsTab:Toggle("Disable autosend skibidi leaderboard", false, function(value)
-    settings.automaticServerQueryLeaderboard = not value
-end)
-
-settingsTab:Toggle("Disable autorepeat tagged message", false, function(value)
-    if not oldChat then
-        settings.repeatTagged = not value
-    end
-end)
-
-if boothGame then
-    settingsTab:Toggle("Disable sign status (booth game only)", false, function(value)
-        settings.signStatus = not value
+    mainTab:Textbox("Category", "Type here!", true, function(value)
+        selectedCategory = getCategoryName(value)
     end)
-    settingsTab:Toggle("Don't use roman numbers for sign timer (may get tagged)", false, function(value)
-        settings.romanNumbers = not value
+
+    local categoryTable = {"Option 1", "Option 2", "Option 3", "Option 4", "Option 5"} -- Example category options
+    mainTab:Dropdown("Category", categoryTable, function(mob)
+        selectedCategory = mob
+    end)
+
+    mainTab:Button("Start query", function()
+        if categories[selectedCategory] then
+            startQuery(selectedCategory)
+        end
+    end)
+
+    local RS = game:GetService("ReplicatedStorage")
+    local TCS = game:GetService("TextChatService")
+
+    local function Chat(msg)
+        if RS:FindFirstChild("DefaultChatSystemChatEvents") then
+            RS.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
+        else
+            TCS.TextChannels.RBXGeneral:SendAsync(msg)
+        end
+    end
+
+    mainTab:Button("Stop", function()
+        queryCooldown, queryRunning, currentQuestion, questionAnsweredBy, awaitingAnswer = true, false, nil, nil, false
+        Chat("🛑 - Query Stopped.")
+        task.delay(5, function() queryCooldown = false end)
+    end)
+
+    mainTab:Button("Send rules", function()
+        sendRules()
+    end)
+
+    mainTab:Button("Send server LB", function()
+        sendLeaderboard("Server", "🏆 ")
+    end)
+
+    mainTab:Button("Reset all points", function()
+        pointManager.ResetAllPoints()
+        Chat("All points reset.")
+    end)
+
+    local pointsServ = win:Server("Points System", "")
+
+    local pointsTab = pointsServ:Channel("Points System")
+
+    local targetPlayer
+
+    pointsTab:Textbox("Target", "Type here!", true, function(value)
+        targetPlayer = getTargetPlayer(value)
+        print("Target Player: ", targetPlayer)
+    end)
+
+    local pointsToAdd
+
+    pointsTab:Textbox("Amount of points", "0", true, function(value)
+        if value and tonumber(value) then
+            pointsToAdd = tonumber(value)
+        end
+        print("Points to add: ", pointsToAdd)
+    end)
+
+    pointsTab:Button("Apply points", function()
+        print("Apply Points Button Clicked")
+        if pointsToAdd then
+            if targetPlayer == "ALL" then
+                for _, player in ipairs(game.Players:GetPlayers()) do
+                    pointManager.AddPoints(player, pointsToAdd, "Global")
+                end
+                Chat("➕ - "..pointsToAdd.." points have been added to everyone.")
+            elseif targetPlayer then
+                pointManager.AddPoints(targetPlayer, pointsToAdd, "Global")
+                Chat("➕ - "..targetPlayer.DisplayName.. "'s points have been increased by ".. pointsToAdd.. ".")
+            else
+                Chat("❌ - Target player not found.")
+            end
+        end
+    end)
+
+    pointsTab:Button("Decrease points", function()
+        print("Decrease Points Button Clicked")
+        if pointsToAdd then
+            if targetPlayer == "ALL" then
+                for _, player in ipairs(game.Players:GetPlayers()) do
+                    pointManager.AddPoints(player, -pointsToAdd, "Global")
+                end
+                Chat("➖ - "..pointsToAdd.." points have been decreased from everyone.")
+            elseif targetPlayer then
+                pointManager.AddPoints(targetPlayer, -pointsToAdd, "Global")
+                Chat("➖ - "..targetPlayer.DisplayName.. "'s points have been decreased by ".. pointsToAdd.. ".")
+            else
+                Chat("❌ - Target player not found.")
+            end
+        end
+    end)
+
+    pointsTab:Button("Reset points", function()
+        print("Reset Points Button Clicked")
+        if targetPlayer == "ALL" then
+            for _, player in ipairs(game.Players:GetPlayers()) do
+                pointManager.ClearGlobalPointsForPlayer(player)
+            end
+            Chat("All players' points have been reset.")
+        elseif targetPlayer then
+            pointManager.ClearGlobalPointsForPlayer(targetPlayer)
+            Chat(targetPlayer.DisplayName.. "'s points have been reset.")
+        else
+            Chat("❌ - Target player not found.")
+        end
+    end)
+
+    local settingsServ = win:Server("Settings", "")
+
+    local settingsTab = settingsServ:Channel("Settings")
+
+    settingsTab:Dropdown("Mode", {"Query", "Multiple"}, function(mob)
+        mode = mob:lower()
+        if mob == "Query" then
+            Chat("❓ - Query mode initialized.")
+        elseif mob == "Multiple" then
+            Chat("🅺❕ - Multiple mode initialized.")
+        end
+    end)
+
+    settingsTab:Toggle("Autopick category", false, function(value)
+        settings.autoplay = value
+    end)
+
+    settingsTab:Textbox("Queries cooldown", "13", true, function(value)
+        if value then
+            settings.questionTimeout = tonumber(value)
+        end
+    end)
+
+    settingsTab:Textbox("Wrong answer cooldown", "3", true, function(value)
+        if value then
+            settings.userCooldown = tonumber(value)
+        end
+    end)
+
+    settingsTab:Textbox("Autosend skibidi leaderboard when queries end", "3", true, function(value)
+        if value then
+            settings.sendLeaderBoardAfterQuestions = tonumber(value)
+        end
+    end)
+
+    settingsTab:Toggle("Disable autosend skibidi leaderboard", false, function(value)
+        settings.automaticServerQueryLeaderboard = not value
+    end)
+
+    settingsTab:Toggle("Disable autorepeat tagged message", false, function(value)
+        if not oldChat then
+            settings.repeatTagged = not value
+        end
+    end)
+
+    if boothGame then
+        settingsTab:Toggle("Disable sign status (booth game only)", false, function(value)
+            settings.signStatus = not value
+        end)
+        settingsTab:Toggle("Don't use roman numbers for sign timer (may get tagged)", false, function(value)
+            settings.romanNumbers = not value
+        end)
+    end
+
+    local otherServ = win:Server("Other", "")
+
+    local otherTab = otherServ:Channel("Other")
+
+    otherTab:Button("Load Infinite Yield", function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+    end)
+
+    local destroyServ = win:Server("Destroy GUI", "")
+
+    local destroyTab = destroyServ:Channel("Destroy GUI")
+
+    destroyTab:Button("Destroy GUI", function()
+        DiscordLib:Destroy()
     end)
 end
 
--- Other Channel
-local otherTab = serv:Channel("Other")
+-- Create the key authentication UI
+local keyTab = keyServ:Channel("Key Authentication")
 
-otherTab:Button("Load Infinite Yield", function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+keyTab:Textbox("Enter Key", "Type here!", true, function(value)
+    if value == correctKey then
+        authenticated = true
+        createMainGUI()
+    else
+        DiscordLib:Notification("Authentication Error", "The key you entered is incorrect.", "Okay!")
+    end
 end)
-
--- Destroy GUI Channel
-local destroyTab = serv:Channel("Destroy GUI")
-
-destroyTab:Button("Destroy GUI", function()
-    DiscordLib:Destroy()
-end)
-
--- Initialize the DiscordLib UI
-win:Server("by dawid#7205")
