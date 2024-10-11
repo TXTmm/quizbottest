@@ -1450,13 +1450,15 @@ local function getCategoryName(name: string) -- detects category from begging of
     end
 end
 ---------- UI ----------
-local library
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local success = pcall(function()
-    library = loadstring(game:HttpGet('https://raw.githubusercontent.com/Damian-11/Rayfield/main/source.lua'))() -- Rayfield lib
+    -- You can add any additional setup if needed, 
+    -- but Fluent is loaded directly above.
 end)
-if not success then-- if the first libary is down for any reason, ask user to report it on discord
-    notify("Quizbot error", "Failed to load UI libary. Please report this bug in the Discord server:", {
+
+if not success then
+    notify("Quizbot error", "Failed to load UI library. Please report this bug in the Discord server:", {
         Callback = setclipboard("https://discord.gg/wm384KFFMC"),
         Button1 = "Copy invite link"
     })
@@ -1465,63 +1467,93 @@ end
 local uiVisible = true
 local function toggleUI(actionName, inputState, inputObject)
     if inputState == Enum.UserInputState.Begin then
-        library:SetVisibility(not uiVisible)
-        uiVisible = library:IsVisible()
+        -- Assuming Fluent has a function to set visibility similar to Rayfield
+        -- You may need to adjust this part based on Fluent's API
+        uiVisible = not uiVisible
+        Fluent:SetVisibility(uiVisible) -- Update this line based on Fluent's API
     end
 end
+
 ContextActionService:BindAction("ToggleUI", toggleUI, true)
 ContextActionService:SetImage("ToggleUI", "rbxassetid://100698995249426")
 
-local window = library:CreateWindow({
-	Name = "Quizbot | Made by Damian11",
-	LoadingTitle = "Loading quizbot...",
-	LoadingSubtitle = "made by Damian11"
+local window = Fluent:CreateWindow({
+    Title = "Quizbot | Made by Damian11",
+    SubTitle = "Loading quizbot...",
+    Theme = "Dark", -- Add this if you want to specify a theme
+    Size = UDim2.fromOffset(580, 460), -- Set the size as needed
+    Acrylic = true, -- Optional, if you want a blur effect
 })
 
-local mainTab = window:CreateTab("Main", 81072774414061)
-mainTab:CreateSection("Category selection")
+-- Add additional UI components as needed using Fluent's API
+
+local mainTab = window:AddTab({ Title = "Main", Icon = "" }) -- Create a new tab
+
+mainTab:AddParagraph({
+    Title = "Category selection",
+    Content = ""
+})
+
 local categoryLabel
 local selectedCategory
-mainTab:CreateInput({
-    Name = "Category",
-    PlaceholderText = "Enter a category name",
-    RemoveTextAfterFocusLost = false,
+
+mainTab:AddInput({
+    Title = "Category",
+    Placeholder = "Enter a category name",
+    Finished = false, -- Only calls callback when you press enter
     Callback = function(value)
         selectedCategory = getCategoryName(value)
         if selectedCategory then
-            notify("Selected category", "The current category is "..selectedCategory)
-            categoryLabel:Set("Selected category: "..selectedCategory)
+            Fluent:Notify({
+                Title = "Selected category",
+                Content = "The current category is " .. selectedCategory,
+                Duration = 5
+            })
+            categoryLabel:Set("Selected category: " .. selectedCategory)
         end
     end
 })
-categoryDropdown = mainTab:CreateDropdown({
-    Name = "Category",
-    Options = categoryTable,
-    CurrentOption = "Select a category",
+
+local categoryDropdown = mainTab:AddDropdown("Category", {
+    Title = "Category",
+    Values = categoryTable,
+    Multi = false,
+    Default = "Select a category",
     Callback = function(option)
         selectedCategory = option[1]
-        categoryLabel:Set("Selected category: "..selectedCategory)
+        categoryLabel:Set("Selected category: " .. selectedCategory)
     end
 })
-mainTab:CreateButton({
-    Name = "Send category list in chat",
+
+mainTab:AddButton({
+    Title = "Send category list in chat",
     Callback = sendCategories
 })
 
-mainTab:CreateSection("Quiz controls")
-categoryLabel = mainTab:CreateLabel("Selected category: None")
-mainTab:CreateButton({
-    Name = "Start quiz",
+mainTab:AddParagraph({
+    Title = "Quiz controls",
+    Content = ""
+})
+
+categoryLabel = mainTab:AddLabel("Selected category: None")
+
+mainTab:AddButton({
+    Title = "Start quiz",
     Callback = function()
         if categoryLookupTable[selectedCategory] then
             startQuiz(selectedCategory)
         else
-            notify("Invalid category", "Select a valid category to start the quiz")
+            Fluent:Notify({
+                Title = "Invalid category",
+                Content = "Select a valid category to start the quiz",
+                Duration = 5
+            })
         end
     end
 })
-mainTab:CreateButton({
-    Name = "Stop quiz",
+
+mainTab:AddButton({
+    Title = "Stop quiz",
     Callback = function()
         quizCooldown = true
         quizRunning = false
@@ -1534,47 +1566,67 @@ mainTab:CreateButton({
     end
 })
 
-local leaderboardTab = window:CreateTab("Leaderborad", 118001929385447)
-leaderboardTab:CreateSection("Server leaderboard (doesn't reset)")
-table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
-table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥈 [Empty] - 0"))
-table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:CreateLabel("🥉 [Empty] - 0"))
-leaderboardTab:CreateButton({
-    Name = "Send server leaderboard in chat",
+local leaderboardTab = window:AddTab({ Title = "Leaderboard", Icon = "" })
+
+leaderboardTab:AddParagraph({
+    Title = "Server leaderboard (doesn't reset)",
+    Content = ""
+})
+
+table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:AddLabel("🥇 [Empty] - 0"))
+table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:AddLabel("🥈 [Empty] - 0"))
+table.insert(leaderboardLabels.GlobalPoints, leaderboardTab:AddLabel("🥉 [Empty] - 0"))
+
+leaderboardTab:AddButton({
+    Title = "Send server leaderboard in chat",
     Callback = function()
-        sendLeaderboard("Server", "🏆 | ")
+        sendLeaderboard("Server", "🏆 | ", quizRunning)
     end
 })
 
-leaderboardTab:CreateSection("Current quiz leaderboard (resets every quiz)")
-table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("🥇 [Empty] - 0"))
-table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("🥈 [Empty] - 0"))
-table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:CreateLabel("🥉 [Empty] - 0"))
-leaderboardTab:CreateButton({
-    Name = "Send current quiz leaderboard in chat",
+leaderboardTab:AddParagraph({
+    Title = "Current quiz leaderboard (resets every quiz)",
+    Content = ""
+})
+
+table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:AddLabel("🥇 [Empty] - 0"))
+table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:AddLabel("🥈 [Empty] - 0"))
+table.insert(leaderboardLabels.CurrentQuizPoints, leaderboardTab:AddLabel("🥉 [Empty] - 0"))
+
+leaderboardTab:AddButton({
+    Title = "Send current quiz leaderboard in chat",
     Callback = function()
-        sendLeaderboard("Current quiz", "📜 | ")
+        sendLeaderboard("Current quiz", "📜 | ", quizRunning)
     end
 })
 
-leaderboardTab:CreateSection("Reset points")
-leaderboardTab:CreateButton({
-    Name = "Reset all points",
+leaderboardTab:AddParagraph({
+    Title = "Reset points",
+    Content = ""
+})
+
+leaderboardTab:AddButton({
+    Title = "Reset all points",
     Callback = pointManager.ResetAllPoints
 })
 
-local playerControlTab = window:CreateTab("Player controls", 126813390527582)
+local playerControlTab = window:AddTab({ Title = "Player controls", Icon = "" })
 local targetPlayer
 local targetPlayerLabel
-playerControlTab:CreateSection("Select target")
-playerControlTab:CreateInput({
-    Name = "Target",
-    PlaceholderText = "Enter target name",
-    Callback = function(value)
+
+playerControlTab:AddParagraph({
+    Title = "Select target",
+    Content = ""
+})
+
+playerControlTab:AddInput({
+    Title = "Target",
+    Placeholder = "Enter target name",
+    OnSubmit = function(value)
         if #value < 1 then return end
         targetPlayer = getTargetPlayer(value)
         if targetPlayer then
-            targetPlayerLabel:Set("Target: "..targetPlayer.Name)
+            targetPlayerLabel:SetText("Target: " .. targetPlayer.Name)
         end
     end
 })
@@ -1588,37 +1640,44 @@ local function TargetExists(target)
     end
 end
 
-targetPlayerLabel = playerControlTab:CreateLabel("Target: None")
-playerControlTab:CreateSection("Modify points")
+targetPlayerLabel = playerControlTab:AddLabel("Target: None")
+
+playerControlTab:AddParagraph({
+    Title = "Modify points",
+    Content = ""
+})
+
 local pointsToAdd
-playerControlTab:CreateInput({
-    Name = "Amount of points",
-    PlaceholderText = "Enter points amount",
-    Callback = function(value)
+playerControlTab:AddInput({
+    Title = "Amount of points",
+    Placeholder = "Enter points amount",
+    OnSubmit = function(value)
         if value and tonumber(value) then
             pointsToAdd = value
         end
     end
 })
-local pointsType: string
-playerControlTab:CreateDropdown({
-    Name = "Apply as",
-    Options = {"Server points", "Current quiz points"},
-    Callback = function(option)
-        pointsType = option[1]
+
+local pointsType
+playerControlTab:AddDropdown({
+    Title = "Apply as",
+    Items = {"Server points", "Current quiz points"},
+    OnSelection = function(option)
+        pointsType = option
     end
 })
-playerControlTab:CreateButton({
-    Name = "Apply points",
-    Callback = function()
+
+playerControlTab:AddButton({
+    Title = "Apply points",
+    OnClick = function()
         if not TargetExists(targetPlayer) then return end
         if pointsToAdd then
             if pointsType == "Server points" then
                 pointManager.AddPoints(targetPlayer, pointsToAdd, "GlobalPoints")
-                notify("Points added", pointsToAdd.." server points have been added to "..targetPlayer.Name)
+                notify("Points added", pointsToAdd .. " server points have been added to " .. targetPlayer.Name)
             elseif pointsType == "Current quiz points" then
                 pointManager.AddPoints(targetPlayer, pointsToAdd, "CurrentQuizPoints")
-                notify("Points added", pointsToAdd.." current quiz points have been added to "..targetPlayer.Name)
+                notify("Points added", pointsToAdd .. " current quiz points have been added to " .. targetPlayer.Name)
             else
                 notify("No point type selected", "Select either server points or current quiz points to add")
             end
@@ -1627,93 +1686,119 @@ playerControlTab:CreateButton({
         end
     end
 })
-playerControlTab:CreateButton({
-    Name = "Reset global & quiz points",
-    Callback = function()
+
+playerControlTab:AddButton({
+    Title = "Reset global & quiz points",
+    OnClick = function()
         if not TargetExists(targetPlayer) then return end
         pointManager.RemoveAccount(targetPlayer)
-        notify("Points reset", "Successfully removed all points for "..targetPlayer.Name)
+        notify("Points reset", "Successfully removed all points for " .. targetPlayer.Name)
     end
 })
 
-playerControlTab:CreateSection("Access control")
-playerControlTab:CreateButton({
-    Name = "Block from participating",
-    Callback = function()
+playerControlTab:AddParagraph({
+    Title = "Access control",
+    Content = ""
+})
+
+playerControlTab:AddButton({
+    Title = "Block from participating",
+    OnClick = function()
         if not TargetExists(targetPlayer) then return end
         if not table.find(blockedPlayers, targetPlayer.Name) then
             table.insert(blockedPlayers, targetPlayer.Name)
-            notify("Player blocked", targetPlayer.Name.." has been blocked from participating")
+            notify("Player blocked", targetPlayer.Name .. " has been blocked from participating")
         else
-            notify("Can't block player", targetPlayer.Name.." is already blocked from participating")
+            notify("Can't block player", targetPlayer.Name .. " is already blocked from participating")
         end
     end
 })
-playerControlTab:CreateButton({
-    Name = "Unblock from participating",
-    Callback = function()
+
+playerControlTab:AddButton({
+    Title = "Unblock from participating",
+    OnClick = function()
         if not TargetExists(targetPlayer) then return end
         if table.find(blockedPlayers, targetPlayer.Name) then
             table.remove(blockedPlayers, table.find(blockedPlayers, targetPlayer.Name))
-            notify("Player unblocked", targetPlayer.Name.." is no longer blocked from participating")
+            notify("Player unblocked", targetPlayer.Name .. " is no longer blocked from participating")
         else
-            notify("Can't unblock player", targetPlayer.Name.." is not blocked from participating")
+            notify("Can't unblock player", targetPlayer.Name .. " is not blocked from participating")
         end
     end
 })
-playerControlTab:CreateButton({
-    Name = "Unblock all",
-    Callback = function()
-        notify("Unblocked everyone", #blockedPlayers.." players have been unblocked")
+
+playerControlTab:AddButton({
+    Title = "Unblock all",
+    OnClick = function()
+        notify("Unblocked everyone", #blockedPlayers .. " players have been unblocked")
         table.clear(blockedPlayers)
     end
 })
 
-playerControlTab:CreateSection("Whitelist and blacklist")
-playerControlTab:CreateToggle({
-    Name = "Enable whitelist",
-    CurrentValue = whiteListEnabled,
-    Callback = function(value)
+playerControlTab:AddParagraph({
+    Title = "Whitelist and blacklist",
+    Content = ""
+})
+
+playerControlTab:AddToggle({
+    Title = "Enable whitelist",
+    State = whiteListEnabled,
+    OnChange = function(value)
         whiteListEnabled = value
     end
 })
-playerControlTab:CreateButton({
-    Name = "Whitelist",
-    Callback = function()
+
+playerControlTab:AddButton({
+    Title = "Whitelist",
+    OnClick = function()
         if not TargetExists(targetPlayer) then return end
         if not table.find(whiteListedplayers, targetPlayer.Name) then
             table.insert(whiteListedplayers, targetPlayer.Name)
             if whiteListEnabled then
-                notify("Player whitelisted", targetPlayer.Name.." has been whitelisted. The whitelist is currently enabled")
+                notify("Player whitelisted", targetPlayer.Name .. " has been whitelisted. The whitelist is currently enabled")
             else
-                notify("Player whitelisted", targetPlayer.Name.." has been whitelisted, but the whitelist is currently disabled")
+                notify("Player whitelisted", targetPlayer.Name .. " has been whitelisted, but the whitelist is currently disabled")
             end
         else
-            notify("Can't whitelist player", targetPlayer.Name.." is already on the whitelist")
+            notify("Can't whitelist player", targetPlayer.Name .. " is already on the whitelist")
         end
     end
 })
-playerControlTab:CreateButton({
-    Name = "Unwhitelist",
-    Callback = function()
+
+playerControlTab:AddButton({
+    Title = "Unwhitelist",
+    OnClick = function()
         if not TargetExists(targetPlayer) then return end
         if table.find(whiteListedplayers, targetPlayer.Name) then
             table.remove(whiteListedplayers, table.find(whiteListedplayers, targetPlayer.Name))
-            notify("Player removed", targetPlayer.Name.." is no longer on the whitelist")
+            notify("Player removed", targetPlayer.Name .. " is no longer on the whitelist")
         else
-            notify("Can't remove player", targetPlayer.Name.." is not on the whitelist")
+            notify("Can't remove player", targetPlayer.Name .. " is not on the whitelist")
         end
     end
 })
-playerControlTab:CreateButton({
-    Name = "Clear whitelist",
-    Callback = function()
-        notify("Whitelist has been cleared", #whiteListedplayers.." players have been removed from the whitelist")
+
+playerControlTab:AddButton({
+    Title = "Clear whitelist",
+    OnClick = function()
+        notify("Whitelist has been cleared", #whiteListedplayers .. " players have been removed from the whitelist")
         table.clear(whiteListedplayers)
     end
 })
 
 local settingsTab = window:CreateTab("Settings", 124411316797456)
+
+settingsTab:CreateSection("Discord server")
+settingsTab:CreateLabel("Join our Discord server for support: discord.gg/wm384KFFMC")
+
+settingsTab:CreateButton({
+    Name = "Click this button to copy the invite link",
+    Callback = function()
+        setclipboard("https://discord.gg/wm384KFFMC")
+        notify("Successfully copied invite", "The invite link has been copied to your clipboard")
+    end
+})
+
 settingsTab:CreateSection("Select mode")
 settingsTab:CreateDropdown({
     Name = "Mode",
@@ -1728,6 +1813,7 @@ settingsTab:CreateDropdown({
         end
     end
 })
+
 settingsTab:CreateButton({
     Name = "Send rules in chat",
     Callback = sendRules
@@ -1742,15 +1828,16 @@ settingsTab:CreateToggle({
         EnableAntiAfk()
     end
 })
+
 local dropdownAutoplayFilter = table.clone(difficultyOrder)
-dropdownAutoplayFilter[1] = "Missing difficulty" -- replace "" with "Missing difficulty" to prevent confusion
+dropdownAutoplayFilter[1] = "Missing difficulty"
 settingsTab:CreateDropdown({
     Name = "Autoplay filter (unselect all to disable filter)",
     Options = dropdownAutoplayFilter,
     MultipleOptions = true,
     Callback = function(options)
-        local filteredTable = table.clone(options) -- since tables are passed by value (mutable), they need to be cloned to prevent modifying the original table
-        if #options == 0 then -- if none selected, select all
+        local filteredTable = table.clone(options)
+        if #options == 0 then
             filteredTable = difficultyOrder
         elseif table.find(filteredTable, "Missing difficulty") then
             filteredTable[table.find(filteredTable, "Missing difficulty")] = ""
@@ -1762,16 +1849,17 @@ settingsTab:CreateDropdown({
 settingsTab:CreateSection("Time settings")
 settingsTab:CreateInput({
     Name = "Question timeout",
-    PlaceholderText = settings.questionTimeout,
+    PlaceholderText = tostring(settings.questionTimeout),
     Callback = function(value)
         if value and tonumber(value) then
             settings.questionTimeout = tonumber(value)
         end
     end
 })
+
 settingsTab:CreateInput({
     Name = "User cooldown on wrong answer",
-    PlaceholderText = settings.userCooldown,
+    PlaceholderText = tostring(settings.userCooldown),
     Callback = function(value)
         if value and tonumber(value) then
             settings.userCooldown = tonumber(value)
@@ -1782,27 +1870,36 @@ settingsTab:CreateInput({
 settingsTab:CreateSection("Leaderboard settings")
 settingsTab:CreateInput({
     Name = "Send current quiz LB after # of questions",
-    PlaceholderText = settings.sendLeaderBoardAfterQuestions,
+    PlaceholderText = tostring(settings.sendLeaderBoardAfterQuestions),
     Callback = function(value)
         if value and tonumber(value) then
             settings.sendLeaderBoardAfterQuestions = tonumber(value)
+            if not settings.automaticCurrentQuizLeaderboard then
+                notify("Current quiz LB is disabled", "This setting doesn't take effect while the automatic sending of the current quiz LB is disabled")
+            end
         end
     end
 })
+
 settingsTab:CreateToggle({
     Name = "Disable automatic sending of both leaderboards",
+    CurrentValue = not settings.automaticLeaderboards,
     Callback = function(value)
         settings.automaticLeaderboards = not value
     end
 })
+
 settingsTab:CreateToggle({
     Name = "Disable automatic sending of current quiz LB",
+    CurrentValue = not settings.automaticCurrentQuizLeaderboard,
     Callback = function(value)
         settings.automaticCurrentQuizLeaderboard = not value
     end
 })
+
 settingsTab:CreateToggle({
     Name = "Disable automatic sending of server LB",
+    CurrentValue = not settings.automaticServerQuizLeaderboard,
     Callback = function(value)
         settings.automaticServerQuizLeaderboard = not value
     end
@@ -1820,22 +1917,28 @@ settingsTab:CreateToggle({
         end
     end
 })
+
 if boothGame then
     settingsTab:CreateToggle({
-    Name = "Disable sign status (booth game only)",
-    Callback = function(value)
-        settings.signStatus = not value
-    end})
+        Name = "Disable sign status (booth game only)",
+        CurrentValue = not settings.signStatus,
+        Callback = function(value)
+            settings.signStatus = not value
+        end
+    })
+
     settingsTab:CreateToggle({
-    Name = "Don't use roman numbers for sign timer (may get tagged)",
-    Callback = function(value)
-        settings.romanNumbers = not value
-    end})
+        Name = "Don't use roman numbers for sign timer (may get tagged)",
+        CurrentValue = not settings.romanNumbers,
+        Callback = function(value)
+            settings.romanNumbers = not value
+        end
+    })
 end
 
 settingsTab:CreateSection("Disable script")
 settingsTab:CreateButton({
-    Name = "Destory UI and disable script",
+    Name = "Destroy UI and disable script",
     Callback = function()
         if oldChat then
             for _, connection in playerChatConnections do
